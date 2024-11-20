@@ -1,5 +1,5 @@
-#define PARAM_N				200
-#define PARAM_K				9
+#define PARAM_N				192
+#define PARAM_K				7
 #define PREFIX                          (PARAM_N / (PARAM_K + 1))
 #define NR_INPUTS                       (1 << PREFIX)
 // Approximate log base 2 of number of elements in hash tables

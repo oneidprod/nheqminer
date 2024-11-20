@@ -107,10 +107,12 @@ uint32_t htlayout_getxhash0(uint32_t prevbo, __global const slot0 *pslot)
   return pslot->hash->bytes[prevbo] >> 4;
 #elif WN == 200 && RESTBITS == 8
   return (pslot->hash->bytes[prevbo] & 0xf) << 4 | pslot->hash->bytes[prevbo+1] >> 4;
+#elif WN == 200 && RESTBITS == 9
+      return (pslot->hash->bytes[prevbo] & 0x1f) << 4 | pslot->hash->bytes[prevbo+1] >> 4;
 #elif WN == 144 && RESTBITS == 4
   return pslot->hash->bytes[prevbo] & 0xf;
-#elif WN == 200 && RESTBITS == 6
-  return (pslot->hash->bytes[prevbo] & 0x3) << 4 | pslot->hash->bytes[prevbo+1] >> 4;
+#elif WN == 192 && RESTBITS == 4
+      return pslot->hash->bytes[prevbo] & 0xf;
 #else
 #error non implemented
 #endif
@@ -124,10 +126,12 @@ uint32_t htlayout_getxhash1(uint32_t prevbo, __global const slot1 *pslot)
   return pslot->hash->bytes[prevbo] & 0xf;
 #elif WN == 200 && RESTBITS == 8
   return pslot->hash->bytes[prevbo];
+#elif WN == 200 && RESTBITS == 9
+      return (pslot->hash->bytes[prevbo]&1) << 8 | pslot->hash->bytes[prevbo+1];
 #elif WN == 144 && RESTBITS == 4
   return pslot->hash->bytes[prevbo] & 0xf;
-#elif WN == 200 && RESTBITS == 6
-  return pslot->hash->bytes[prevbo] & 0x3f;
+#elif WN == 192 && RESTBITS == 4
+      return pslot->hash->bytes[prevbo] & 0xf;
 #else
 #error non implemented
 #endif  
@@ -511,14 +515,18 @@ __kernel void digitH(__global blake2b_state *blake2bState,
       const uint32_t bucketid = ((uint32_t)ph[0] << 6) | ph[1] >> 2;
 #elif BUCKBITS == 12 && RESTBITS == 8
       const uint32_t bucketid = ((uint32_t)ph[0] << 4) | ph[1] >> 4;
+#elif BUCKBITS == 11 && RESTBITS == 9
+      const uint32_t bucketid = ((uint32_t)ph[0] << 3) | ph[1] >> 5;
 #elif BUCKBITS == 20 && RESTBITS == 4
       const uint32_t bucketid = ((((uint32_t)ph[0] << 8) | ph[1]) << 4) | ph[2] >> 4;
 #ifdef XINTREE
       const uint32_t xhash = ph[2] & 0xf;
 #endif
 #elif BUCKBITS == 12 && RESTBITS == 4
-      const uint32_t bucketid = ((uint32_t)ph[0] << 4) | ph[1] >> 4;
-      const uint32_t xhash = ph[1] & 0xf;
+        const uint32_t bucketid = ((uint32_t)ph[0] << 4) | ph[1] >> 4;
+        const uint32_t xhash = ph[1] & 0xf;
+#elif BUCKBITS == 20 && RESTBITS == 4
+        const uint32_t bucketid = ((((u32)ph[0] << 8) | ph[1]) << 4) | ph[2] >> 4;
 #else
 #error not implemented
 #endif
@@ -576,6 +584,12 @@ __kernel void digitOdd(const uint32_t r,
                           | (bytes0[htl.prevbo+1] ^ bytes1[htl.prevbo+1])) << 4
                   | (xhash = bytes0[htl.prevbo+2] ^ bytes1[htl.prevbo+2]) >> 4;
         xhash &= 0xf;
+#elif WN == 200 && BUCKBITS == 12 && RESTBITS == 8
+          xorbucketid = (((uuint32_t32)(bytes0[htl.prevbo+1] ^ bytes1[htl.prevbo+1]) & 0xf) << 8)
+                             | (bytes0[htl.prevbo+2] ^ bytes1[htl.prevbo+2]);
+#elif WN == 200 && BUCKBITS == 11 && RESTBITS == 9
+          xorbucketid = (((uint32_t)(bytes0[htl.prevbo+1] ^ bytes1[htl.prevbo+1]) & 0xf) << 7)
+                             | (bytes0[htl.prevbo+2] ^ bytes1[htl.prevbo+2]) >> 1;
 #elif WN == 144 && BUCKBITS == 20 && RESTBITS == 4
         xorbucketid = ((((uint32_t)(bytes0[htl.prevbo+1] ^ bytes1[htl.prevbo+1]) << 8)
                             | (bytes0[htl.prevbo+2] ^ bytes1[htl.prevbo+2])) << 4)
@@ -585,10 +599,10 @@ __kernel void digitOdd(const uint32_t r,
         xorbucketid = ((uint32_t)(bytes0[htl.prevbo+1] ^ bytes1[htl.prevbo+1]) << 4)
                   | (xhash = bytes0[htl.prevbo+2] ^ bytes1[htl.prevbo+2]) >> 4;
         xhash &= 0xf;
-#elif WN == 200 && BUCKBITS == 14 && RESTBITS == 6
-        xorbucketid = ((((uint32_t)(bytes0[htl.prevbo+1] ^ bytes1[htl.prevbo+1]) & 0xf) << 8)
-                           | (bytes0[htl.prevbo+2] ^ bytes1[htl.prevbo+2])) << 2
-                           | (bytes0[htl.prevbo+3] ^ bytes1[htl.prevbo+3]) >> 6;
+#elif WN == 192 && BUCKBITS == 20 && RESTBITS == 4
+          xorbucketid = ((((uint32_t)(bytes0[htl.prevbo+1] ^ bytes1[htl.prevbo+1]) << 8)
+                              | (bytes0[htl.prevbo+2] ^ bytes1[htl.prevbo+2])) << 4)
+                              | (bytes0[htl.prevbo+3] ^ bytes1[htl.prevbo+3]) >> 4;
 #else
 #error not implemented
 #endif
@@ -653,9 +667,10 @@ __kernel void digitEven(const uint32_t r,
 #elif WN == 96 && BUCKBITS == 12 && RESTBITS == 4
         xorbucketid = ((uint32_t)(bytes0[htl.prevbo+1] ^ bytes1[htl.prevbo+1]) << 4)
                           | (bytes0[htl.prevbo+2] ^ bytes1[htl.prevbo+2]) >> 4;
-#elif WN == 200 && BUCKBITS == 14 && RESTBITS == 6
-        xorbucketid = ((uint32_t)(bytes0[htl.prevbo+1] ^ bytes1[htl.prevbo+1]) << 6)
-                          | (bytes0[htl.prevbo+2] ^ bytes1[htl.prevbo+2]) >> 2;
+#elif WN == 192 && BUCKBITS == 20 && RESTBITS == 4
+          xorbucketid = ((((uint32_t)(bytes0[htl.prevbo+1] ^ bytes1[htl.prevbo+1]) << 8)
+                              | (bytes0[htl.prevbo+2] ^ bytes1[htl.prevbo+2])) << 4)
+                              | (bytes0[htl.prevbo+3] ^ bytes1[htl.prevbo+3]) >> 4;
 #else
 #error not implemented
 #endif

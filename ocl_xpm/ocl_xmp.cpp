@@ -105,7 +105,7 @@ static void setheader(blake2b_state *ctx, const char *header, const uint32_t hea
 {
 	uint32_t le_N = WN;
 	uint32_t le_K = WK;
-	char personal[] = "ZcashPoW01230123";
+	char personal[] = "ZERO_PoW";
 	memcpy(personal + 8, &le_N, 4);
 	memcpy(personal + 12, &le_K, 4);
 	blake2b_param P[1];
@@ -204,12 +204,12 @@ void ocl_xmp::start(ocl_xmp& device_context) {
 
 	for (size_t i = 0; i < gpus.size(); i++) {
 		char kernelName[64];
-		sprintf(kernelName, "equiw200k9_gpu%u.bin", (unsigned)i);
+		sprintf(kernelName, "equiw192k7_gpu%u.bin", (unsigned)i);
 		if (!clCompileKernel(gContext[i],
 			gpus[i],
 			kernelName,
 			{ "zcash/gpu/equihash.cl" },
-			"-I./zcash/gpu -DXINTREE -DWN=200 -DWK=9 -DRESTBITS=4 -DUNROLL",
+			"-I./zcash/gpu -DXINTREE -DWN=192 -DWK=7 -DRESTBITS=4 -DUNROLL",
 			&binstatus[i],
 			&gProgram[i])) {
 			return;
@@ -270,19 +270,19 @@ void ocl_xmp::solve(const char *tequihash_header,
 #if BUCKBITS == 16 && RESTBITS == 4 && defined XINTREE && defined(UNROLL)
 	for (unsigned i = 1; i <= 8; i++)
 		digit(miner->queue, miner->_digitKernels[i], device_context.threadsNum, device_context.wokrsize);
-#else    
-	size_t globalSize[] = { _threadsNum, 1, 1 };
-	size_t localSize[] = { _threadsPerBlocksNum, 1 };
-	for (unsigned r = 1; r < WK; r++) {
-		if (r & 1) {
-			OCL(clSetKernelArg(miner->_digitOKernel, 0, sizeof(cl_uint), &r));
-			OCL(clEnqueueNDRangeKernel(miner->queue, miner->_digitOKernel, 1, 0, globalSize, localSize, 0, 0, 0));
-		}
-		else {
-			OCL(clSetKernelArg(miner->_digitEKernel, 0, sizeof(cl_uint), &r));
-			OCL(clEnqueueNDRangeKernel(miner->queue, miner->_digitEKernel, 1, 0, globalSize, localSize, 0, 0, 0));
-		}
-	}
+// #else    
+// 	size_t globalSize[] = { _threadsNum, 1, 1 };
+// 	size_t localSize[] = { _threadsPerBlocksNum, 1 };
+// 	for (unsigned r = 1; r < WK; r++) {
+// 		if (r & 1) {
+// 			OCL(clSetKernelArg(miner->_digitOKernel, 0, sizeof(cl_uint), &r));
+// 			OCL(clEnqueueNDRangeKernel(miner->queue, miner->_digitOKernel, 1, 0, globalSize, localSize, 0, 0, 0));
+// 		}
+// 		else {
+// 			OCL(clSetKernelArg(miner->_digitEKernel, 0, sizeof(cl_uint), &r));
+// 			OCL(clEnqueueNDRangeKernel(miner->queue, miner->_digitEKernel, 1, 0, globalSize, localSize, 0, 0, 0));
+// 		}
+// 	}
 #endif
 	digit(miner->queue, miner->_digitKKernel, device_context.threadsNum, device_context.wokrsize);
 

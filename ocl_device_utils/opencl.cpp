@@ -36,7 +36,7 @@ bool clInitialize(int requiredPlatform, std::vector<cl_device_id> &gpus)
   
   
   if (platformIdx == -1) {
-    printf("<error> platform %s not exists\n", requiredPlatform);
+    // printf("<error> platform %s not exists\n", requiredPlatform);
     return false;
   }
   
