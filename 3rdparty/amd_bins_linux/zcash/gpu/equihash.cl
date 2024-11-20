@@ -111,6 +111,8 @@ uint32_t htlayout_getxhash0(uint32_t prevbo, __global const slot0 *pslot)
       return (pslot->hash->bytes[prevbo] & 0x1f) << 4 | pslot->hash->bytes[prevbo+1] >> 4;
 #elif WN == 144 && RESTBITS == 4
   return pslot->hash->bytes[prevbo] & 0xf;
+#elif WN == 200 && RESTBITS == 6
+  return (pslot->hash->bytes[prevbo] & 0x3) << 4 | pslot->hash->bytes[prevbo+1] >> 4;
 #elif WN == 192 && RESTBITS == 4
       return pslot->hash->bytes[prevbo] & 0xf;
 #else
@@ -130,6 +132,8 @@ uint32_t htlayout_getxhash1(uint32_t prevbo, __global const slot1 *pslot)
       return (pslot->hash->bytes[prevbo]&1) << 8 | pslot->hash->bytes[prevbo+1];
 #elif WN == 144 && RESTBITS == 4
   return pslot->hash->bytes[prevbo] & 0xf;
+#elif WN == 200 && RESTBITS == 6
+  return pslot->hash->bytes[prevbo] & 0x3f;
 #elif WN == 192 && RESTBITS == 4
       return pslot->hash->bytes[prevbo] & 0xf;
 #else
@@ -599,6 +603,10 @@ __kernel void digitOdd(const uint32_t r,
         xorbucketid = ((uint32_t)(bytes0[htl.prevbo+1] ^ bytes1[htl.prevbo+1]) << 4)
                   | (xhash = bytes0[htl.prevbo+2] ^ bytes1[htl.prevbo+2]) >> 4;
         xhash &= 0xf;
+#elif WN == 200 && BUCKBITS == 14 && RESTBITS == 6
+        xorbucketid = ((((uint32_t)(bytes0[htl.prevbo+1] ^ bytes1[htl.prevbo+1]) & 0xf) << 8)
+                           | (bytes0[htl.prevbo+2] ^ bytes1[htl.prevbo+2])) << 2
+                           | (bytes0[htl.prevbo+3] ^ bytes1[htl.prevbo+3]) >> 6;
 #elif WN == 192 && BUCKBITS == 20 && RESTBITS == 4
           xorbucketid = ((((uint32_t)(bytes0[htl.prevbo+1] ^ bytes1[htl.prevbo+1]) << 8)
                               | (bytes0[htl.prevbo+2] ^ bytes1[htl.prevbo+2])) << 4)
@@ -667,6 +675,9 @@ __kernel void digitEven(const uint32_t r,
 #elif WN == 96 && BUCKBITS == 12 && RESTBITS == 4
         xorbucketid = ((uint32_t)(bytes0[htl.prevbo+1] ^ bytes1[htl.prevbo+1]) << 4)
                           | (bytes0[htl.prevbo+2] ^ bytes1[htl.prevbo+2]) >> 4;
+#elif WN == 200 && BUCKBITS == 14 && RESTBITS == 6
+        xorbucketid = ((uint32_t)(bytes0[htl.prevbo+1] ^ bytes1[htl.prevbo+1]) << 6)
+                          | (bytes0[htl.prevbo+2] ^ bytes1[htl.prevbo+2]) >> 2;
 #elif WN == 192 && BUCKBITS == 20 && RESTBITS == 4
           xorbucketid = ((((uint32_t)(bytes0[htl.prevbo+1] ^ bytes1[htl.prevbo+1]) << 8)
                               | (bytes0[htl.prevbo+2] ^ bytes1[htl.prevbo+2])) << 4)
