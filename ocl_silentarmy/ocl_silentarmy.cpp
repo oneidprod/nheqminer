@@ -526,7 +526,7 @@ void ocl_silentarmy::solve(const char *tequihash_header,
 	for (uint32_t i = 0; i < miner->sols->nr; i++) {
 		if (miner->sols->valid[i]) {
 			compress(proof, (uint32_t *)(miner->sols->values[i]), 1 << PARAM_K);
-			solutionf(std::vector<uint32_t>(0), 1344, proof);
+			solutionf(std::vector<uint32_t>(0), 400, proof);
 		}
 	}
 	hashdonef();

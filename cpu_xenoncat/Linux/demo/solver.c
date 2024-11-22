@@ -39,7 +39,7 @@ int SolverFunction(void* context, const unsigned char* input,
 	numsolutions = EhSolver(context, *(uint32_t *)(input+136));
 
 	for (i=0; i<numsolutions; i++) {
-		validBlock(validBlockData, (unsigned char*)(context+1344*i));
+		validBlock(validBlockData, (unsigned char*)(context+400*i));
 	}
 	return numsolutions;
 }
@@ -113,7 +113,7 @@ int main(void)
 	for (i=0; i<j; i++) {
 		sprintf(outfilename, "out%d.bin", i);
 		outfile = fopen(outfilename, "wb");
-		fwrite(context+1344*i, 1344, 1, outfile);
+		fwrite(context+400*i, 400, 1, outfile);
 		fclose(outfile);
 	}
 

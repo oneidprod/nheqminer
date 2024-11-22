@@ -105,10 +105,10 @@ void cpu_xenoncat::solve(const char *tequihash_header,
 #endif
 	for (i = 0; i < numsolutions; i++) 
 	{
-		//printf("Solution found, start: %08x\n", *(uint32_t*)((unsigned char*)device_context.memory + (1344 * i)));
-		solutionf(std::vector<uint32_t>(0), 1344, (unsigned char*)device_context.memory + (1344 * i));
+		//printf("Solution found, start: %08x\n", *(uint32_t*)((unsigned char*)device_context.memory + (400 * i)));
+		solutionf(std::vector<uint32_t>(0), 400, (unsigned char*)device_context.memory + (400 * i));
 		if (cancelf()) return;
-		//validBlock(validBlockData, (unsigned char*)context + (1344 * i));
+		//validBlock(validBlockData, (unsigned char*)context + (400 * i));
 	}
 	hashdonef();
 }
